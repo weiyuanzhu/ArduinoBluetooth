@@ -22,22 +22,6 @@
         android:layout_below="@+id/button"
         android:layout_alignParentStart="true" />
 
-    <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/listView2"
-        android:layout_toEndOf="@+id/listView"
-        android:layout_alignTop="@+id/listView" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Discovery"
-        android:id="@+id/button2"
-        android:layout_alignParentTop="true"
-        android:layout_alignStart="@+id/listView2"
-        android:onClick="discovery"/>
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -53,16 +37,18 @@
         android:id="@+id/editText"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/button3" />
+        android:layout_alignEnd="@+id/button3"
+        />
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Send"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Red"
         android:id="@+id/button4"
-        android:layout_alignParentBottom="true"
-        android:layout_toEndOf="@+id/editText"
-        android:onClick="send"/>
+        android:onClick="send"
+        android:layout_above="@+id/picker"
+        android:layout_alignStart="@+id/picker"
+        android:background="@drawable/red" />
 
     <Button
         android:layout_width="wrap_content"
@@ -70,14 +56,33 @@
         android:text="Test"
         android:id="@+id/button5"
         android:layout_alignParentBottom="true"
-        android:layout_toEndOf="@+id/button2"
         android:onClick="test"/>
 
     <com.larswerkman.holocolorpicker.ColorPicker
         android:id="@+id/picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/listView"
+        android:layout_marginStart="70dp" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Green"
+        android:id="@+id/button2"
+        android:background="@drawable/blue"
+        android:layout_above="@+id/picker"
+        android:layout_toEndOf="@+id/button4" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="Blue"
+        android:id="@+id/button6"
+        android:layout_alignTop="@+id/button2"
+        android:background="@drawable/green"
+        android:layout_toRightOf="@+id/button2"
+        />
 
 </RelativeLayout>

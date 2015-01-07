@@ -1,5 +1,6 @@
 package com.mackwell.bluetoothtest;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -10,7 +11,6 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.ParcelUuid;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -35,7 +35,7 @@ import java.util.Map;
 
 
 
-public class BluetoothSettings extends ActionBarActivity {
+public class BluetoothSettings extends Activity {
 
     static final int REQUEST_ENABLE_BT = 100;
     static final String MY_UUID = "e296b5c6-959d-11e4-b100-123b93f75cba";
