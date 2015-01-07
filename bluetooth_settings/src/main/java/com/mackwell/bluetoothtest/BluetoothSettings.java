@@ -264,13 +264,49 @@ public class BluetoothSettings extends Activity {
         editText.setText("");
     }
 
-    public void test(View view){
-        Log.d(TAG,"picker: " + colorPicker.getColor());
+    public void red(View view){
+
 
         byte[] buffer = new byte[10];
 
         if (flag) {
             buffer[0] = 1;
+            buffer[1] = 0;
+            flag = false;
+        }else{
+            buffer[0] = 1;
+            buffer[1] = 127;
+            flag = true;
+        }
+
+        dataThread.write(buffer);
+
+    }
+    public void green(View view){
+
+
+        byte[] buffer = new byte[10];
+
+        if (flag) {
+            buffer[0] = 2;
+            buffer[1] = 0;
+            flag = false;
+        }else{
+            buffer[0] = 1;
+            buffer[1] = 127;
+            flag = true;
+        }
+
+        dataThread.write(buffer);
+
+    }
+    public void blue(View view){
+
+
+        byte[] buffer = new byte[10];
+
+        if (flag) {
+            buffer[0] = 3;
             buffer[1] = 0;
             flag = false;
         }else{

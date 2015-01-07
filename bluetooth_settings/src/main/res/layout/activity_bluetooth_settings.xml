@@ -43,20 +43,21 @@
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Red"
+        android:text="Turn on"
         android:id="@+id/button4"
-        android:onClick="send"
-        android:layout_above="@+id/picker"
-        android:layout_alignStart="@+id/picker"
-        android:background="@drawable/red" />
+        android:onClick="red"
+        android:background="@drawable/red"
+        android:layout_alignBottom="@+id/button6"
+        android:layout_alignStart="@+id/picker" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Test"
+        android:text="Send"
         android:id="@+id/button5"
+        android:onClick="send"
         android:layout_alignParentBottom="true"
-        android:onClick="test"/>
+        android:layout_toEndOf="@+id/editText" />
 
     <com.larswerkman.holocolorpicker.ColorPicker
         android:id="@+id/picker"
@@ -69,20 +70,21 @@
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Green"
+        android:text="Turn on"
         android:id="@+id/button2"
         android:background="@drawable/blue"
-        android:layout_above="@+id/picker"
-        android:layout_toEndOf="@+id/button4" />
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/button6"
+        android:onClick="blue"/>
 
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Blue"
+        android:text="Turn on"
         android:id="@+id/button6"
-        android:layout_alignTop="@+id/button2"
         android:background="@drawable/green"
-        android:layout_toRightOf="@+id/button2"
-        />
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/button4"
+        android:onClick="green"/>
 
 </RelativeLayout>
