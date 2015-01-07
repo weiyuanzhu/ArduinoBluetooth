@@ -7,10 +7,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,10 +23,11 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import com.larswerkman.holocolorpicker.ColorPicker;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,11 +55,13 @@ public class BluetoothSettings extends ActionBarActivity {
     private Button connectButton;
     private Button sendButton;
     private EditText editText;
+    private ColorPicker colorPicker;
 
     private ConnectThread connectThread;
     private ConnectedThread dataThread;
 
     private int index;
+    private boolean flag = false;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -101,7 +105,50 @@ public class BluetoothSettings extends ActionBarActivity {
         connectButton = (Button) findViewById(R.id.button3);
         sendButton = (Button) findViewById(R.id.button4);
         editText = (EditText) findViewById(R.id.editText);
+        colorPicker = (ColorPicker) findViewById(R.id.picker);
+        colorPicker.setOnColorSelectedListener(new ColorPicker.OnColorSelectedListener() {
+            @Override
+            public void onColorSelected(int i) {
+                colorPicker.setOldCenterColor(i);
+                int red =  Color.red(colorPicker.getColor());
+                int green =  Color.green(colorPicker.getColor());
+                int blue =  Color.blue(colorPicker.getColor());
 
+                Log.d(TAG,"R: " + Color.red(colorPicker.getColor()) + " G: " + Color.green(colorPicker.getColor()) + " B: " + Color.blue(colorPicker.getColor()));
+
+
+                byte[] buffer = new byte[10];
+                buffer[0] = 0;
+                buffer[1] = (byte) (red/2);
+                buffer[2] = (byte) (green/2);
+                buffer[3] = (byte) (blue/2);
+
+                dataThread.write(buffer);
+
+            }
+        });
+
+        /*colorPicker.setOnColorChangedListener(new ColorPicker.OnColorChangedListener() {
+            @Override
+            public void onColorChanged(int i) {
+
+
+                int red =  Color.red(colorPicker.getColor());
+                int green =  Color.green(colorPicker.getColor());
+                int blue =  Color.blue(colorPicker.getColor());
+
+                Log.d(TAG,"R: " + Color.red(colorPicker.getColor()) + " G: " + Color.green(colorPicker.getColor()) + " B: " + Color.blue(colorPicker.getColor()));
+
+
+                byte[] buffer = new byte[10];
+                buffer[0] = 0;
+                buffer[1] = (byte) (red/2);
+                buffer[2] = (byte) (green/2);
+                buffer[3] = (byte) (blue/2);
+
+                dataThread.write(buffer);
+            }
+        });*/
         //register receiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReceiver, filter);
@@ -200,7 +247,7 @@ public class BluetoothSettings extends ActionBarActivity {
         } else {
             connectThread.cancel();
             connectThread = null;
-            Log.d(TAG,Thread.currentThread().toString());
+            Log.d(TAG, Thread.currentThread().toString());
 
         }
 
@@ -211,9 +258,29 @@ public class BluetoothSettings extends ActionBarActivity {
         Log.d(TAG,editText.getText().toString());
 
         if(dataThread!=null){
-            dataThread.write(editText.getText().toString());
+            byte[] buf = editText.getText().toString().getBytes();
+            dataThread.write(buf);
         }
         editText.setText("");
+    }
+
+    public void test(View view){
+        Log.d(TAG,"picker: " + colorPicker.getColor());
+
+        byte[] buffer = new byte[10];
+
+        if (flag) {
+            buffer[0] = 1;
+            buffer[1] = 0;
+            flag = false;
+        }else{
+            buffer[0] = 1;
+            buffer[1] = 127;
+            flag = true;
+        }
+
+        dataThread.write(buffer);
+
     }
 
     private class ConnectThread extends Thread {
@@ -229,6 +296,7 @@ public class BluetoothSettings extends ActionBarActivity {
             // Get a BluetoothSocket to connect with the given BluetoothDevice
             try {
                 // MY_UUID is the app's UUID string, also used by the server code
+                ParcelUuid[] uuid = device.getUuids();
                 tmp = device.createRfcommSocketToServiceRecord(device.getUuids()[0].getUuid());
 
             } catch (IOException e) { }
@@ -331,16 +399,16 @@ public class BluetoothSettings extends ActionBarActivity {
         }
 
         /* Call this from the main activity to send data to the remote device */
-        public void write(String message) {
-            byte[] bytes = null;
-            try {
+        public void write(byte[] buffer) {
+            //byte[] bytes = null;
+            /*try {
                 bytes = message.getBytes("UTF-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             try {
-                mmOutStream.write(bytes);
+                mmOutStream.write(buffer);
             } catch (IOException e) { }
         }
 
