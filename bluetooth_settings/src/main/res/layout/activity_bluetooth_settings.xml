@@ -43,11 +43,11 @@
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Turn on"
-        android:id="@+id/button4"
-        android:onClick="red"
+        android:text="On"
+        android:id="@+id/buttonRed"
+        android:onClick="button"
         android:background="@drawable/red"
-        android:layout_alignBottom="@+id/button6"
+        android:layout_alignBottom="@+id/buttonGreen"
         android:layout_alignStart="@+id/picker" />
 
     <Button
@@ -63,28 +63,28 @@
         android:id="@+id/picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/listView"
-        android:layout_marginStart="70dp" />
+        android:layout_marginStart="70dp"
+        android:layout_above="@+id/editText"
+        android:layout_toEndOf="@+id/listView" />
 
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Turn on"
-        android:id="@+id/button2"
+        android:text="On"
+        android:id="@+id/buttonBlue"
         android:background="@drawable/blue"
         android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/button6"
-        android:onClick="blue"/>
+        android:layout_toEndOf="@+id/buttonGreen"
+        android:onClick="button"/>
 
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:text="Turn on"
-        android:id="@+id/button6"
+        android:text="On"
+        android:id="@+id/buttonGreen"
         android:background="@drawable/green"
         android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/button4"
-        android:onClick="green"/>
+        android:layout_toEndOf="@+id/buttonRed"
+        android:onClick="button"/>
 
 </RelativeLayout>

@@ -103,7 +103,7 @@ public class BluetoothSettings extends Activity {
         mHandler = new Handler();
 
         connectButton = (Button) findViewById(R.id.button3);
-        sendButton = (Button) findViewById(R.id.button4);
+        sendButton = (Button) findViewById(R.id.buttonRed);
         editText = (EditText) findViewById(R.id.editText);
         colorPicker = (ColorPicker) findViewById(R.id.picker);
         colorPicker.setOnColorSelectedListener(new ColorPicker.OnColorSelectedListener() {
@@ -123,7 +123,7 @@ public class BluetoothSettings extends Activity {
                 buffer[2] = (byte) (green/2);
                 buffer[3] = (byte) (blue/2);
 
-                dataThread.write(buffer);
+                if(dataThread!=null) dataThread.write(buffer);
 
             }
         });
@@ -259,7 +259,7 @@ public class BluetoothSettings extends Activity {
 
         if(dataThread!=null){
             byte[] buf = editText.getText().toString().getBytes();
-            dataThread.write(buf);
+            if(dataThread!=null) dataThread.write(buf);
         }
         editText.setText("");
     }
@@ -300,22 +300,31 @@ public class BluetoothSettings extends Activity {
         dataThread.write(buffer);
 
     }
-    public void blue(View view){
+    public void button(View view){
 
+        Button button = (Button) view;
 
+        int position = 0;
+        switch(button.getId()){
+            case R.id.buttonRed: position = 1; break;
+            case R.id.buttonGreen: position = 2; break;
+            case R.id.buttonBlue: position = 3; break;
+
+        }
         byte[] buffer = new byte[10];
 
-        if (flag) {
-            buffer[0] = 3;
-            buffer[1] = 0;
-            flag = false;
-        }else{
-            buffer[0] = 1;
+        if ("On".equals(button.getText())) {
+            buffer[0] = (byte) position;
             buffer[1] = 127;
-            flag = true;
+            button.setText("Off");
+        }else{
+            buffer[0] = (byte) position;
+            buffer[1] = 0;
+            button.setText("On");
+
         }
 
-        dataThread.write(buffer);
+        if(dataThread!=null) dataThread.write(buffer);
 
     }
 
