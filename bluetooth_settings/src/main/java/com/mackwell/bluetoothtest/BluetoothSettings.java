@@ -10,8 +10,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Handler;
+import android.os.Parcel;
 import android.os.ParcelUuid;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import com.larswerkman.holocolorpicker.ColorPicker;
 
@@ -32,7 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.UUID;
 
 
 public class BluetoothSettings extends Activity {
@@ -72,6 +75,24 @@ public class BluetoothSettings extends Activity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 deviceList.add(device);
 
+            }
+            else if(BluetoothDevice.ACTION_UUID.equals(action)){
+              BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+              Parcelable[] uuids =  intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID);
+                if (device.getUuids()!=null) {
+                    Log.d("TAG","UUID found: " + uuids[0].toString());
+                    if(connectThread!=null) connectThread = null;
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            connectButton.setEnabled(true);
+                        }
+                    });
+
+                }else
+                {
+                    device.fetchUuidsWithSdp();
+                }
             }
         }
     };
@@ -150,8 +171,11 @@ public class BluetoothSettings extends Activity {
             }
         });*/
         //register receiver
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(mReceiver, filter);
+        IntentFilter filter1 = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        IntentFilter filter2 = new IntentFilter(BluetoothDevice.ACTION_UUID);
+        registerReceiver(mReceiver, filter1);
+        registerReceiver(mReceiver,filter2);
+
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         pairedDevices =  new Object[]{};
@@ -235,9 +259,10 @@ public class BluetoothSettings extends Activity {
 
     public void connect(View view){
         BluetoothDevice device = (BluetoothDevice) pairedDevices[index];
+
         if (connectThread == null) {
             connectThread = new ConnectThread(device);
-            Log.d(TAG,Thread.currentThread().toString());
+           // Log.d(TAG,Thread.currentThread().toString());
 
         }
 
@@ -341,8 +366,15 @@ public class BluetoothSettings extends Activity {
             // Get a BluetoothSocket to connect with the given BluetoothDevice
             try {
                 // MY_UUID is the app's UUID string, also used by the server code
-                ParcelUuid[] uuid = device.getUuids();
-                tmp = device.createRfcommSocketToServiceRecord(device.getUuids()[0].getUuid());
+                ParcelUuid[] uuidArray = device.getUuids();
+                if(uuidArray!=null) {
+                    UUID deviceUUID = uuidArray[0].getUuid();
+                    tmp = device.createRfcommSocketToServiceRecord(deviceUUID);
+                }else{
+                    Log.d(TAG,"Searching UUID");
+                    mBluetoothAdapter.cancelDiscovery();
+                    device.fetchUuidsWithSdp();
+                }
 
             } catch (IOException e) { }
             mmSocket = tmp;
@@ -352,38 +384,47 @@ public class BluetoothSettings extends Activity {
             // Cancel discovery because it will slow down the connection
             Log.d(TAG,currentThread().toString());
 
-            mBluetoothAdapter.cancelDiscovery();
+            if (mmSocket!=null) {
+                mBluetoothAdapter.cancelDiscovery();
 
-            try {
-                // Connect the device through the socket. This will block
-                // until it succeeds or throws an exception
-                if (!mmSocket.isConnected()) {
-                    mmSocket.connect();
-                } else {
-                    mmSocket.close();
+                try {
+                    // Connect the device through the socket. This will block
+                    // until it succeeds or throws an exception
+                    if (!mmSocket.isConnected()) {
+                        mmSocket.connect();
+                    } else {
+                        mmSocket.close();
+                    }
+
+                } catch (IOException connectException) {
+                    // Unable to connect; close the socket and get out
+                    try {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(BluetoothSettings.this, "Connection + Failed, please try again", Toast.LENGTH_SHORT).show();
+                                connectButton.setEnabled(true);
+                            }
+                        });
+                        mmSocket.close();
+
+                    } catch (IOException closeException) { }
+                    return;
                 }
 
-            } catch (IOException connectException) {
-                // Unable to connect; close the socket and get out
-                try {
-                    mmSocket.close();
+                if(mmSocket.isConnected()){
+                    Log.d(TAG, "bt device connected: " + mmSocket.isConnected());
+                    dataThread = new ConnectedThread(mmSocket);
 
-                } catch (IOException closeException) { }
-                return;
-            }
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            connectButton.setText("Disconnect");
+                            connectButton.setEnabled(true);
 
-            if(mmSocket.isConnected()){
-                Log.d(TAG, "bt device connected: " + mmSocket.isConnected());
-                dataThread = new ConnectedThread(mmSocket);
-
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        connectButton.setText("Disconnect");
-                        connectButton.setEnabled(true);
-
-                    }
-                });
+                        }
+                    });
+                }
             }
 
             // Do work to manage the connection (in a separate connectThread)
