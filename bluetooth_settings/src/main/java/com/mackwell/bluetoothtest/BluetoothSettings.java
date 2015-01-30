@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Handler;
-import android.os.Parcel;
 import android.os.ParcelUuid;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -24,6 +23,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.larswerkman.holocolorpicker.ColorPicker;
@@ -31,14 +31,39 @@ import com.larswerkman.holocolorpicker.ColorPicker;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 
-public class BluetoothSettings extends Activity {
+public class BluetoothSettings extends Activity implements BluetoothLongConnection.OnReceiveListener {
+
+    @Override
+    public void receive(List<Integer> rxBuffer) {
+        System.out.println("rxBuffer size: " + rxBuffer.size());
+
+        endTime = System.nanoTime();
+        final DecimalFormat df = new DecimalFormat("#.00");
+        final double timeElapsed = (endTime-startTime)/1e9;
+
+        this.rxBuffer.addAll(rxBuffer);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(BluetoothSettings.this.rxBuffer.size() + "/" + bytes_to_receive + " in " + df.format(timeElapsed) + "secs");
+            }
+        });
+
+        if(rxBuffer.get(1)==0xAD && (rxBuffer.get(2)==0x29 || rxBuffer.get(2)==0xA1))
+        {
+            this.rxBuffer.clear();
+        }
+
+    }
 
     static final int REQUEST_ENABLE_BT = 100;
     static final String MY_UUID = "e296b5c6-959d-11e4-b100-123b93f75cba";
@@ -59,12 +84,18 @@ public class BluetoothSettings extends Activity {
     private Button sendButton;
     private EditText editText;
     private ColorPicker colorPicker;
+    private TextView textView;
 
     private ConnectThread connectThread;
     private ConnectedThread dataThread;
+    private BluetoothLongConnection longConnection;
 
     private int index;
+    private List<Integer> rxBuffer;
+    private int bytes_to_receive = 0;
     private boolean flag = false;
+    private long startTime = 0L;
+    private long endTime = 0L;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -121,8 +152,10 @@ public class BluetoothSettings extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_settings);
 
+        rxBuffer = new ArrayList<>();
         mHandler = new Handler();
 
+        textView = (TextView) findViewById(R.id.textView);
         connectButton = (Button) findViewById(R.id.button3);
         sendButton = (Button) findViewById(R.id.buttonRed);
         editText = (EditText) findViewById(R.id.editText);
@@ -138,11 +171,11 @@ public class BluetoothSettings extends Activity {
                 Log.d(TAG,"R: " + Color.red(colorPicker.getColor()) + " G: " + Color.green(colorPicker.getColor()) + " B: " + Color.blue(colorPicker.getColor()));
 
 
-                byte[] buffer = new byte[10];
+                char[] buffer = new char[10];
                 buffer[0] = 0;
-                buffer[1] = (byte) (red/2);
-                buffer[2] = (byte) (green/2);
-                buffer[3] = (byte) (blue/2);
+                buffer[1] = (char) (red/2);
+                buffer[2] = (char) (green/2);
+                buffer[3] = (char) (blue/2);
 
                 if(dataThread!=null) dataThread.write(buffer);
 
@@ -255,6 +288,14 @@ public class BluetoothSettings extends Activity {
     public void discovery(View view){
         mBluetoothAdapter.startDiscovery();
 
+
+
+    }
+
+    public void searchLE(View view)
+    {
+//        mBluetoothAdapter.startLeScan();
+
     }
 
     public void connect(View view){
@@ -265,6 +306,8 @@ public class BluetoothSettings extends Activity {
            // Log.d(TAG,Thread.currentThread().toString());
 
         }
+
+
 
         if(connectButton.getText().equals("Connect")){
             connectThread.start();
@@ -283,52 +326,27 @@ public class BluetoothSettings extends Activity {
         Log.d(TAG,editText.getText().toString());
 
         if(dataThread!=null){
-            byte[] buf = editText.getText().toString().getBytes();
+            char[] buf = editText.getText().toString().toCharArray();
             if(dataThread!=null) dataThread.write(buf);
         }
         editText.setText("");
     }
 
-    public void red(View view){
-
-
-        byte[] buffer = new byte[10];
-
-        if (flag) {
-            buffer[0] = 1;
-            buffer[1] = 0;
-            flag = false;
-        }else{
-            buffer[0] = 1;
-            buffer[1] = 127;
-            flag = true;
+    public void byteTest(View view)
+    {
+        if(dataThread!=null){
+            char[] buf = new char[64];
+            for(int i=0; i<buf.length;i++){
+                buf[i] = 99;
+            }
+            if(dataThread!=null) dataThread.write(buf);
         }
 
-        dataThread.write(buffer);
-
     }
-    public void green(View view){
 
 
-        byte[] buffer = new byte[10];
-
-        if (flag) {
-            buffer[0] = 2;
-            buffer[1] = 0;
-            flag = false;
-        }else{
-            buffer[0] = 1;
-            buffer[1] = 127;
-            flag = true;
-        }
-
-        dataThread.write(buffer);
-
-    }
-    public void button(View view){
-
+    public  void button(View view){
         Button button = (Button) view;
-
         int position = 0;
         switch(button.getId()){
             case R.id.buttonRed: position = 1; break;
@@ -336,32 +354,54 @@ public class BluetoothSettings extends Activity {
             case R.id.buttonBlue: position = 3; break;
 
         }
-        byte[] buffer = new byte[10];
+        char[] buffer = new char[10];
 
         if ("On".equals(button.getText())) {
-            buffer[0] = (byte) position;
+            buffer[0] = (char) position;
             buffer[1] = 127;
             button.setText("Off");
         }else{
-            buffer[0] = (byte) position;
+            buffer[0] = (char) position;
             buffer[1] = 0;
             button.setText("On");
 
         }
 
-        if(dataThread!=null) dataThread.write(buffer);
+     if(dataThread!=null) dataThread.write(buffer);
+
+ }
+
+    public void ft(View view)
+    {
+        startTime = System.nanoTime();
+        Log.d(TAG,"FT");
+        bytes_to_receive = 39;
+        char command[] = {0x02,0xA1,0x60,0x00,0x78,0x7E,0x5A,0xA5,0x0D,0x0A};
+        if(longConnection!=null) longConnection.write(command);
 
     }
 
+    public void getInit(View view)
+    {
+        startTime = System.nanoTime();
+        bytes_to_receive = 16784;
+        Log.d(TAG,"GetPanelInformation");
+        char command[] = {0x02,0xA0,0x21,0x68,0x18,0x5A,0xA5,0x0D,0x0A};
+        if(longConnection!=null) longConnection.write(command);
+
+    }
+
+
+
     private class ConnectThread extends Thread {
         private final BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
+        private final BluetoothDevice  mDevice;
 
         public ConnectThread(BluetoothDevice device) {
             // Use a temporary object that is later assigned to mmSocket,
             // because mmSocket is final
             BluetoothSocket tmp = null;
-            mmDevice = device;
+            mDevice = device;
 
             // Get a BluetoothSocket to connect with the given BluetoothDevice
             try {
@@ -414,14 +454,13 @@ public class BluetoothSettings extends Activity {
 
                 if(mmSocket.isConnected()){
                     Log.d(TAG, "bt device connected: " + mmSocket.isConnected());
-                    dataThread = new ConnectedThread(mmSocket);
-
+                    longConnection = new BluetoothLongConnection(mmSocket,BluetoothSettings.this);
+                    longConnection.start();
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
                             connectButton.setText("Disconnect");
                             connectButton.setEnabled(true);
-
                         }
                     });
                 }
@@ -447,6 +486,7 @@ public class BluetoothSettings extends Activity {
     }
 
     private class ConnectedThread extends Thread {
+
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
@@ -468,16 +508,51 @@ public class BluetoothSettings extends Activity {
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
+            System.out.println("bluetooth thread starts listening");
+            //byte[] buffer = new byte[1024];  // buffer store for the stream
+            ArrayList<Integer> buffer = new ArrayList<Integer>();
+            int len= -1;
+            int bytes_received = 0;
+            ArrayList<Byte> buf = new ArrayList<Byte>(100);
             int bytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
                     // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
+                    int data;
+                    while(mmInStream.available()>0)
+                    {
+                        data = mmInStream.read();
+                        buffer.add(data);
+                        bytes_received++;
+                        //System.out.print(data + " ");
+                        //TimeUnit.MILLISECONDS.sleep(10);
+                    }
+
+                    //System.out.flush();
+
+                    /*while((len = mmInStream.read(buffer)) != -1){
+                        //Log.d(TAG, "Received bytes: "  + len);
+                        bytes_received += len;
+
+//                        System.out.print(mmInStream.read() + " ");
+
+                    }*/
+
+                    final int finalBytes_received = bytes_received;  //final copy of bytes_received
+
                     // Send the obtained bytes to the UI activity
                     //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setText(finalBytes_received + "/16784");
+                        }
+                    });
+
+
+                    buffer.clear();
                 } catch (IOException e) {
                     break;
                 }
@@ -485,7 +560,7 @@ public class BluetoothSettings extends Activity {
         }
 
         /* Call this from the main activity to send data to the remote device */
-        public void write(byte[] buffer) {
+        public void write(char[] command) {
             //byte[] bytes = null;
             /*try {
                 bytes = message.getBytes("UTF-8");
@@ -493,9 +568,18 @@ public class BluetoothSettings extends Activity {
                 e.printStackTrace();
             }*/
 
+            byte[] buffer = new byte[command.length];
+
+            for(int i=0;i<command.length;i++)
+            {
+                buffer[i] = (byte) command[i];
+            }
+
             try {
                 mmOutStream.write(buffer);
-            } catch (IOException e) { }
+            } catch (IOException e) {
+
+            }
         }
 
         /* Call this from the main activity to shutdown the connection */
