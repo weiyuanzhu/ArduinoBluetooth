@@ -3,7 +3,13 @@ package com.mackwell.bluetoothtest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothSocket;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -37,7 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 
 public class BluetoothSettings extends Activity implements BluetoothLongConnection.OnReceiveListener {
@@ -48,7 +53,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
         endTime = System.nanoTime();
         final DecimalFormat df = new DecimalFormat("#.00");
-        final double timeElapsed = (endTime-startTime)/1e9;
+        final double timeElapsed = (endTime - startTime) / 1e9;
 
         this.rxBuffer.addAll(rxBuffer);
         mHandler.post(new Runnable() {
@@ -58,8 +63,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
             }
         });
 
-        if(rxBuffer.get(1)==0xAD && (rxBuffer.get(2)==0x29 || rxBuffer.get(2)==0xA1))
-        {
+        if (rxBuffer.get(1) == 0xAD && (rxBuffer.get(2) == 0x29 || rxBuffer.get(2) == 0xA1)) {
             this.rxBuffer.clear();
         }
 
@@ -68,12 +72,15 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     static final int REQUEST_ENABLE_BT = 100;
     static final String MY_UUID = "e296b5c6-959d-11e4-b100-123b93f75cba";
     static final String TAG = "Bluetooth Test";
+    private static final long SCAN_PERIOD = 10000;
 
     private BluetoothAdapter mBluetoothAdapter;
+    private boolean leScanning;
     private Handler mHandler;
 
     private SimpleAdapter mSimpleAdapter;
-    private List<Map<String,String>> mDataList;
+    private List<BluetoothDevice> bluetoothDeviceList;
+    private List<Map<String, String>> mDataList;
     private List<String> dataList;
     private Object[] pairedDevices;
     private ArrayAdapter<String> mArrayAdapter;
@@ -82,6 +89,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     private ListView mListView;
     private Button connectButton;
     private Button sendButton;
+    private Button searchLeButton;
     private EditText editText;
     private ColorPicker colorPicker;
     private TextView textView;
@@ -89,6 +97,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     private ConnectThread connectThread;
     private ConnectedThread dataThread;
     private BluetoothLongConnection longConnection;
+    private BluetoothGatt bluetoothGatt;
 
     private int index;
     private List<Integer> rxBuffer;
@@ -106,13 +115,12 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 deviceList.add(device);
 
-            }
-            else if(BluetoothDevice.ACTION_UUID.equals(action)){
-              BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-              Parcelable[] uuids =  intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID);
-                if (device.getUuids()!=null) {
-                    Log.d("TAG","UUID found: " + uuids[0].toString());
-                    if(connectThread!=null) connectThread = null;
+            } else if (BluetoothDevice.ACTION_UUID.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Parcelable[] uuids = intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID);
+                if (device.getUuids() != null) {
+                    Log.d("TAG", "UUID found: " + uuids[0].toString());
+                    if (connectThread != null) connectThread = null;
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -120,28 +128,71 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                         }
                     });
 
-                }else
-                {
+                } else {
                     device.fetchUuidsWithSdp();
                 }
             }
         }
     };
 
+    private BluetoothGattCallback bleGattCallback = new BluetoothGattCallback(){
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+            bluetoothGatt.discoverServices();
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+            List<BluetoothGattService> services = gatt.getServices();
+            for(BluetoothGattService service: services){
+                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+            }
+//            bluetoothGatt.writeCharacteristic();
+//            bluetoothGatt.
+
+        }
+    };
+
+    private ScanCallback mLeScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+
+            BluetoothDevice device = result.getDevice();
+            if(!bluetoothDeviceList.contains(device)) {
+                bluetoothDeviceList.add(device);
+                updateMDataList();
+                mSimpleAdapter.notifyDataSetChanged();
+            }
+
+            int type = device.getType();
+        }
+    };
+
+
     private void updateMDataList(){
         if(mDataList==null){
             mDataList = new ArrayList<Map<String, String>>();
-        }else   mDataList.clear();
+        }
+        else   mDataList.clear();
 
         Map map = null;
 
-        if(pairedDevices.length>0){
-            for(int i=0;i<pairedDevices.length;i++){
+        if(bluetoothDeviceList.size()>0){
+            for(int i=0;i<bluetoothDeviceList.size();i++){
                 map = new HashMap<String,String>();
-                BluetoothDevice device = (BluetoothDevice) pairedDevices[i];
+                BluetoothDevice device = (BluetoothDevice)bluetoothDeviceList.get(i);
                 map.put("name",device.getName());
                 map.put("address",device.getAddress());
                 mDataList.add(map);
+
             }
         }
     }
@@ -155,9 +206,12 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         rxBuffer = new ArrayList<>();
         mHandler = new Handler();
 
+        bluetoothDeviceList = new ArrayList<BluetoothDevice>();
+
         textView = (TextView) findViewById(R.id.textView);
         connectButton = (Button) findViewById(R.id.button3);
         sendButton = (Button) findViewById(R.id.buttonRed);
+        searchLeButton = (Button) findViewById(R.id.searchLE);
         editText = (EditText) findViewById(R.id.editText);
         colorPicker = (ColorPicker) findViewById(R.id.picker);
         colorPicker.setOnColorSelectedListener(new ColorPicker.OnColorSelectedListener() {
@@ -206,11 +260,21 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         //register receiver
         IntentFilter filter1 = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         IntentFilter filter2 = new IntentFilter(BluetoothDevice.ACTION_UUID);
+        IntentFilter filter3 = new IntentFilter(BluetoothLeService.ACTION_GATT_CONNECTED);
+        IntentFilter filter4 = new IntentFilter(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        IntentFilter filter5 = new IntentFilter(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        IntentFilter filter6 = new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE);
+
         registerReceiver(mReceiver, filter1);
         registerReceiver(mReceiver,filter2);
+        registerReceiver(mReceiver,filter3);
+        registerReceiver(mReceiver,filter4);
+        registerReceiver(mReceiver,filter5);
+        registerReceiver(mReceiver,filter6);
 
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         pairedDevices =  new Object[]{};
         updateMDataList();
 
@@ -278,6 +342,13 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         pairedDevices =  mBluetoothAdapter.getBondedDevices().toArray();
 // If there are paired devices
         if (pairedDevices.length > 0) {
+            for(Object device: pairedDevices)
+            {
+                if(!bluetoothDeviceList.contains(device)){
+                    bluetoothDeviceList.add((BluetoothDevice) device);
+                }
+
+            }
             updateMDataList();
             mSimpleAdapter.notifyDataSetChanged();
 
@@ -294,26 +365,56 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
     public void searchLE(View view)
     {
-//        mBluetoothAdapter.startLeScan();
+        Button button = (Button) view;
+        if("Start Search LE".equals(button.getText()))
+        {
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    leScanning = false;
+                    mBluetoothAdapter.getBluetoothLeScanner().stopScan(mLeScanCallback);
+                    searchLeButton.setText("Start Search LE");
+                }
+            },SCAN_PERIOD);
 
+            leScanning = true;
+            mBluetoothAdapter.getBluetoothLeScanner().startScan(mLeScanCallback);
+            searchLeButton.setText("Stop Search LE");
+
+        }
+        else{
+            leScanning = false;
+            mBluetoothAdapter.getBluetoothLeScanner().stopScan(mLeScanCallback);
+            searchLeButton.setText("Stop Search LE");
+        }
     }
 
-    public void connect(View view){
-        BluetoothDevice device = (BluetoothDevice) pairedDevices[index];
 
-        if (connectThread == null) {
+
+
+    public void connect(View view){
+        BluetoothDevice device = (BluetoothDevice) bluetoothDeviceList.get(index);
+
+        if (device.getType()==BluetoothDevice.DEVICE_TYPE_CLASSIC && connectThread == null) {
             connectThread = new ConnectThread(device);
            // Log.d(TAG,Thread.currentThread().toString());
 
         }
 
-
-
         if(connectButton.getText().equals("Connect")){
-            connectThread.start();
+            switch(device.getType())
+            {
+                case BluetoothDevice.DEVICE_TYPE_LE:
+                    bluetoothGatt = device.connectGatt(this, false, bleGattCallback);
+                    break;
+                case BluetoothDevice.DEVICE_TYPE_CLASSIC:
+                    if(connectThread!=null) connectThread.start();
+                    break;
+                default: break;
+            }
             connectButton.setEnabled(false);
         } else {
-            connectThread.cancel();
+            if(connectThread!=null)connectThread.cancel();
             connectThread = null;
             Log.d(TAG, Thread.currentThread().toString());
 
@@ -410,6 +511,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                 if(uuidArray!=null) {
                     UUID deviceUUID = uuidArray[0].getUuid();
                     tmp = device.createRfcommSocketToServiceRecord(deviceUUID);
+
                 }else{
                     Log.d(TAG,"Searching UUID");
                     mBluetoothAdapter.cancelDiscovery();
@@ -444,6 +546,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                             public void run() {
                                 Toast.makeText(BluetoothSettings.this, "Connection + Failed, please try again", Toast.LENGTH_SHORT).show();
                                 connectButton.setEnabled(true);
+                                connectThread = null;
                             }
                         });
                         mmSocket.close();

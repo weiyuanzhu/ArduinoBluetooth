@@ -130,7 +130,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Search LE"
+        android:text="Start Search LE"
         android:id="@+id/searchLE"
         android:layout_alignBottom="@+id/button2"
         android:layout_toEndOf="@+id/button2"
