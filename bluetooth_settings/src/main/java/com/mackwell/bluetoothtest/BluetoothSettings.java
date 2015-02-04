@@ -145,6 +145,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
+            Log.d(TAG,characteristic.getValue().toString());
         }
 
         @Override
@@ -157,7 +158,16 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 //            bluetoothGatt.writeCharacteristic();
 //            bluetoothGatt.
 
+
         }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+            Log.d(TAG,characteristic.getValue().toString());
+        }
+
+
     };
 
     private ScanCallback mLeScanCallback = new ScanCallback() {
@@ -435,13 +445,11 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
     public void byteTest(View view)
     {
-        if(dataThread!=null){
-            char[] buf = new char[64];
-            for(int i=0; i<buf.length;i++){
-                buf[i] = 99;
-            }
-            if(dataThread!=null) dataThread.write(buf);
-        }
+        startTime = System.nanoTime();
+        Log.d(TAG,"FT");
+        bytes_to_receive = 39;
+        char command[] = {0x02,0xA1,0x54,0x00,0x78,0x7E,0x5A,0xA5,0x0D,0x0A};
+        if(longConnection!=null) longConnection.write(command);
 
     }
 
