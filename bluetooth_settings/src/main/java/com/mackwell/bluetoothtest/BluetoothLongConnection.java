@@ -5,13 +5,14 @@ import android.bluetooth.BluetoothSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Weiyuan on 30/01/2015.
  */
-public class BluetoothLongConnection  extends Thread {
+public class BluetoothLongConnection  extends Thread implements Serializable{
 
     public static final int UART_STOP_BIT_H = 0x5A;
     public static final int UART_STOP_BIT_L = 0xA5;

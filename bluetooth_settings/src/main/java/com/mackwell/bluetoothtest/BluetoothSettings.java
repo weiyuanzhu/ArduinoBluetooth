@@ -305,6 +305,9 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 System.out.println(position);
                 index = position;
+                Intent intent = new Intent(BluetoothSettings.this,DeviceControlActivity.class);
+                intent.putExtra("device",bluetoothDeviceList.get(index));
+                startActivity(intent);
             }
         });
 
@@ -351,11 +354,15 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
         pairedDevices =  mBluetoothAdapter.getBondedDevices().toArray();
 // If there are paired devices
+        Intent i = new Intent();
+
+
         if (pairedDevices.length > 0) {
             for(Object device: pairedDevices)
             {
                 if(!bluetoothDeviceList.contains(device)){
                     bluetoothDeviceList.add((BluetoothDevice) device);
+                    i.putExtra("s",(BluetoothDevice) device);
                 }
 
             }
@@ -363,6 +370,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
             mSimpleAdapter.notifyDataSetChanged();
 
         }
+
 
     }
 
@@ -403,7 +411,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
 
     public void connect(View view){
-        BluetoothDevice device = (BluetoothDevice) bluetoothDeviceList.get(index);
+        BluetoothDevice device =  bluetoothDeviceList.get(index);
 
         if (device.getType()==BluetoothDevice.DEVICE_TYPE_CLASSIC && connectThread == null) {
             connectThread = new ConnectThread(device);
@@ -487,6 +495,17 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         bytes_to_receive = 39;
         char command[] = {0x02,0xA1,0x60,0x00,0x78,0x7E,0x5A,0xA5,0x0D,0x0A};
         if(longConnection!=null) longConnection.write(command);
+
+    }
+
+    public void st(View view)
+    {
+        startTime = System.nanoTime();
+        Log.d(TAG,"ST");
+        bytes_to_receive = 39;
+        char command[] = {0x02,0xA1,0x62,0x00,0x79,0x1E,0x5A,0xA5,0x0D,0x0A};
+        if(longConnection!=null) longConnection.write(command);
+
 
     }
 

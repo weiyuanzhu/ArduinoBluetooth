@@ -19,6 +19,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".DeviceControlActivity"
+            android:label="@string/title_activity_device_control" >
+        </activity>
     </application>
 
 </manifest>
