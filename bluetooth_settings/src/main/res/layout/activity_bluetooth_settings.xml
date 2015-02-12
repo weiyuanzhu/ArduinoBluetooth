@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:text="List paired devices"
         android:id="@+id/button"
+        android:visibility="gone"
 
         android:layout_alignParentStart="true"
         android:onClick="searchPaired"/>
@@ -32,6 +33,7 @@
         android:id="@+id/button3"
         android:layout_alignBottom="@+id/button"
         android:layout_toEndOf="@+id/button"
+        android:visibility="gone"
         android:onClick="connect"/>
 
     <EditText
@@ -41,23 +43,27 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_alignEnd="@+id/button3"
+        android:visibility="gone"
+
         />
 
     <Button
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:text="On"
         android:id="@+id/buttonRed"
         android:onClick="button"
-        android:background="@drawable/red"
-        android:layout_alignBottom="@+id/buttonGreen"
-        android:layout_alignStart="@+id/picker" />
+        android:background="@drawable/on"
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@+id/picker" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Send"
         android:id="@+id/button5"
+        android:visibility="gone"
         android:onClick="send"
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/editText" />
@@ -66,15 +72,15 @@
         android:id="@+id/picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="70dp"
-        android:layout_below="@+id/buttonBlue"
-        android:layout_marginTop="10dp"
-        android:layout_toEndOf="@+id/listView" />
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"/>
 
     <Button
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:text="On"
+        android:visibility="gone"
         android:id="@+id/buttonBlue"
         android:background="@drawable/blue"
         android:layout_alignParentTop="true"
@@ -89,22 +95,25 @@
         android:background="@drawable/green"
         android:layout_alignParentTop="true"
         android:layout_toEndOf="@+id/buttonRed"
+        android:visibility="gone"
         android:onClick="button"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="0/16784"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Bytes Received:"
         android:id="@+id/textView"
         android:layout_alignParentBottom="true"
-        android:layout_toEndOf="@+id/buttonGreen" />
+        android:layout_alignParentStart="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="BytesTest"
         android:id="@+id/button2"
+        android:visibility="gone"
+
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/button5"
         android:onClick="byteTest"/>
@@ -114,6 +123,7 @@
         android:layout_height="wrap_content"
         android:text="FT"
         android:id="@+id/button4"
+        android:visibility="gone"
         android:onClick="ft"
         android:layout_above="@+id/listView"
         android:layout_alignStart="@+id/button5" />
@@ -122,6 +132,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ST"
+        android:visibility="gone"
         android:id="@+id/st"
         android:onClick="st"
         android:layout_above="@+id/listView"
@@ -132,6 +143,7 @@
         android:layout_height="wrap_content"
         android:text="Init"
         android:id="@+id/button6"
+        android:visibility="gone"
         android:layout_alignTop="@+id/button4"
         android:layout_toRightOf="@id/st"
         android:onClick="getInit"/>
@@ -143,6 +155,7 @@
         android:id="@+id/searchLE"
         android:layout_alignBottom="@+id/button2"
         android:layout_toEndOf="@+id/button2"
-        android:onClick="searchLE"/>
+        android:onClick="searchLE"
+        android:visibility="gone"/>
 
 </RelativeLayout>

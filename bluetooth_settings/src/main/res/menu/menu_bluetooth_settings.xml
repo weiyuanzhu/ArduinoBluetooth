@@ -1,6 +1,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".BluetoothSettings">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" android:showAsAction="never" />
+    <item android:id="@+id/action_list_device" android:title="@string/action_list_device"
+        android:orderInCategory="100" android:showAsAction="always" />
+    <item android:id="@+id/action_connect" android:title="@string/action_connect"
+        android:orderInCategory="101" android:showAsAction="always" />
+    <item android:id="@+id/action_ft" android:title="@string/action_ft"
+    android:orderInCategory="102" android:showAsAction="never" />
+    <item android:id="@+id/action_st" android:title="@string/action_st"
+        android:orderInCategory="103" android:showAsAction="never" />
+    <item android:id="@+id/action_panel_init" android:title="@string/action_panel_init"
+        android:orderInCategory="104" android:showAsAction="never" />
 </menu>

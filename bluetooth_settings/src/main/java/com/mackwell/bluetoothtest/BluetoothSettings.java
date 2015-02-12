@@ -88,11 +88,13 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
     private ListView mListView;
     private Button connectButton;
+    private Button onButton;
     private Button sendButton;
     private Button searchLeButton;
     private EditText editText;
     private ColorPicker colorPicker;
     private TextView textView;
+    private MenuItem connectMenuItem;
 
     private ConnectThread connectThread;
     private ConnectedThread dataThread;
@@ -124,7 +126,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            connectButton.setEnabled(true);
+                            connectMenuItem.setEnabled(true);
                         }
                     });
 
@@ -198,7 +200,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         if(bluetoothDeviceList.size()>0){
             for(int i=0;i<bluetoothDeviceList.size();i++){
                 map = new HashMap<String,String>();
-                BluetoothDevice device = (BluetoothDevice)bluetoothDeviceList.get(i);
+                BluetoothDevice device = bluetoothDeviceList.get(i);
                 map.put("name",device.getName());
                 map.put("address",device.getAddress());
                 mDataList.add(map);
@@ -218,6 +220,8 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
         bluetoothDeviceList = new ArrayList<BluetoothDevice>();
 
+        onButton = (Button) findViewById(R.id.buttonRed);
+        onButton.setTextColor(Color.TRANSPARENT);
         textView = (TextView) findViewById(R.id.textView);
         connectButton = (Button) findViewById(R.id.button3);
         sendButton = (Button) findViewById(R.id.buttonRed);
@@ -305,9 +309,9 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 System.out.println(position);
                 index = position;
-                Intent intent = new Intent(BluetoothSettings.this,DeviceControlActivity.class);
-                intent.putExtra("device",bluetoothDeviceList.get(index));
-                startActivity(intent);
+                //Intent intent = new Intent(BluetoothSettings.this,DeviceControlActivity.class);
+                //intent.putExtra("device",bluetoothDeviceList.get(index));
+                //startActivity(intent);
             }
         });
 
@@ -332,6 +336,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_bluetooth_settings, menu);
+        connectMenuItem = menu.findItem(R.id.action_connect);
         return true;
     }
 
@@ -343,14 +348,29 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_list_device:
+                searchPaired();
+                 return true;
+            case R.id.action_connect:
+                connect();
+                return true;
+            case R.id.action_ft:
+                ft();
+                return true;
+            case R.id.action_st:
+                st();
+                return true;
+            case R.id.action_panel_init:
+                getInit();
+                return true;
+            default: return super.onOptionsItemSelected(item);
         }
 
-        return super.onOptionsItemSelected(item);
+
     }
 
-    public void searchPaired(View view){
+    public void searchPaired(){
 
         pairedDevices =  mBluetoothAdapter.getBondedDevices().toArray();
 // If there are paired devices
@@ -410,7 +430,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
 
 
-    public void connect(View view){
+    public void connect(){
         BluetoothDevice device =  bluetoothDeviceList.get(index);
 
         if (device.getType()==BluetoothDevice.DEVICE_TYPE_CLASSIC && connectThread == null) {
@@ -419,7 +439,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
         }
 
-        if(connectButton.getText().equals("Connect")){
+        if(connectMenuItem.getTitle().equals("Connect")){
             switch(device.getType())
             {
                 case BluetoothDevice.DEVICE_TYPE_LE:
@@ -430,11 +450,11 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                     break;
                 default: break;
             }
-            connectButton.setEnabled(false);
+            connectMenuItem.setEnabled(false);
         } else {
             if(connectThread!=null)connectThread.cancel();
             connectThread = null;
-            Log.d(TAG, Thread.currentThread().toString());
+            //Log.d(TAG, Thread.currentThread().toString());
 
         }
 
@@ -471,24 +491,24 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
             case R.id.buttonBlue: position = 3; break;
 
         }
-        char[] buffer = new char[10];
+        char[] buffer = null;
 
         if ("On".equals(button.getText())) {
-            buffer[0] = (char) position;
-            buffer[1] = 127;
+             buffer = new char[]{0x02,0xA1,0x63,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
             button.setText("Off");
-        }else{
-            buffer[0] = (char) position;
-            buffer[1] = 0;
-            button.setText("On");
 
+            button.setBackgroundResource(R.drawable.off);
+        }else{
+            buffer = new char[]{0x02,0xA1,0x64,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+            button.setText("On");
+            button.setBackgroundResource(R.drawable.on);
         }
 
-     if(dataThread!=null) dataThread.write(buffer);
+     if(longConnection!=null) longConnection.write(buffer);
 
  }
 
-    public void ft(View view)
+    public void ft()
     {
         startTime = System.nanoTime();
         Log.d(TAG,"FT");
@@ -498,7 +518,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
     }
 
-    public void st(View view)
+    public void st()
     {
         startTime = System.nanoTime();
         Log.d(TAG,"ST");
@@ -509,7 +529,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
     }
 
-    public void getInit(View view)
+    public void getInit()
     {
         startTime = System.nanoTime();
         bytes_to_receive = 16784;
@@ -572,7 +592,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                             @Override
                             public void run() {
                                 Toast.makeText(BluetoothSettings.this, "Connection + Failed, please try again", Toast.LENGTH_SHORT).show();
-                                connectButton.setEnabled(true);
+                                connectMenuItem.setEnabled(true);
                                 connectThread = null;
                             }
                         });
@@ -589,8 +609,10 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            connectButton.setText("Disconnect");
-                            connectButton.setEnabled(true);
+                            connectMenuItem.setTitle("Disconnect");
+                            connectMenuItem.setEnabled(true);
+                            colorPicker.setVisibility(View.VISIBLE);
+                            onButton.setVisibility(View.VISIBLE);
                         }
                     });
                 }
@@ -608,7 +630,9 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        connectButton.setText("Connect");
+                        connectMenuItem.setTitle("Connect");
+                        colorPicker.setVisibility(View.INVISIBLE);
+                        onButton.setVisibility(View.INVISIBLE);
                     }
                 });
             } catch (IOException e) { }
