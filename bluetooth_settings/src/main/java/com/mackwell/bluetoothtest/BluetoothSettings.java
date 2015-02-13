@@ -28,6 +28,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -86,6 +87,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     private ArrayAdapter<String> mArrayAdapter;
     private List<BluetoothDevice> deviceList;
 
+    private SeekBar mSeekBar;
     private ListView mListView;
     private Button connectButton;
     private Button onButton;
@@ -95,6 +97,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     private ColorPicker colorPicker;
     private TextView textView;
     private MenuItem connectMenuItem;
+
 
     private ConnectThread connectThread;
     private ConnectedThread dataThread;
@@ -220,6 +223,32 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
         bluetoothDeviceList = new ArrayList<BluetoothDevice>();
 
+        mSeekBar = (SeekBar) findViewById(R.id.seekBar);
+//        mSeekBar.setMax(255);
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int value = seekBar.getProgress();
+                char[] buffer = new char[10];
+                buffer[0] = 0x02;
+                buffer[1] = 0xA1;
+                buffer[2] = 0x66;
+                buffer[3] = (char)(value/2);
+
+                if(longConnection!=null) longConnection.write(buffer);
+
+            }
+        });
         onButton = (Button) findViewById(R.id.buttonRed);
         onButton.setTextColor(Color.TRANSPARENT);
         textView = (TextView) findViewById(R.id.textView);
@@ -238,17 +267,20 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
 
                 Log.d(TAG,"R: " + Color.red(colorPicker.getColor()) + " G: " + Color.green(colorPicker.getColor()) + " B: " + Color.blue(colorPicker.getColor()));
 
-
                 char[] buffer = new char[10];
-                buffer[0] = 0;
-                buffer[1] = (char) (red/2);
-                buffer[2] = (char) (green/2);
-                buffer[3] = (char) (blue/2);
+                buffer[0] = 0x02;
+                buffer[1] = 0xA1;
+                buffer[2] = 0x65;
+                buffer[3] = (char) (red/2);
+                buffer[4] = (char) (green/2);
+                buffer[5] = (char) (blue/2);
 
-                if(dataThread!=null) dataThread.write(buffer);
+                if(longConnection!=null) longConnection.write(buffer);
 
             }
         });
+
+
 
         /*colorPicker.setOnColorChangedListener(new ColorPicker.OnColorChangedListener() {
             @Override
@@ -613,6 +645,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                             connectMenuItem.setEnabled(true);
                             colorPicker.setVisibility(View.VISIBLE);
                             onButton.setVisibility(View.VISIBLE);
+                            mSeekBar.setVisibility(View.VISIBLE);
                         }
                     });
                 }
@@ -633,6 +666,7 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                         connectMenuItem.setTitle("Connect");
                         colorPicker.setVisibility(View.INVISIBLE);
                         onButton.setVisibility(View.INVISIBLE);
+                        mSeekBar.setVisibility(View.INVISIBLE);
                     }
                 });
             } catch (IOException e) { }

@@ -24,7 +24,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/listView"
         android:layout_below="@+id/button"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -56,7 +57,7 @@
         android:background="@drawable/on"
         android:visibility="gone"
         android:layout_centerVertical="true"
-        android:layout_toStartOf="@+id/picker" />
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -72,9 +73,9 @@
         android:id="@+id/picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true"
-        android:visibility="gone"/>
+        android:layout_alignEnd="@+id/listView" />
 
     <Button
         android:layout_width="100dp"
@@ -157,5 +158,16 @@
         android:layout_toEndOf="@+id/button2"
         android:onClick="searchLE"
         android:visibility="gone"/>
+
+    <SeekBar
+        android:layout_width="255dp"
+        android:layout_height="wrap_content"
+        android:rotation="270"
+        android:id="@+id/seekBar"
+        android:indeterminate="false"
+        android:visibility="gone"
+        android:max="255"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@+id/buttonRed" />
 
 </RelativeLayout>
