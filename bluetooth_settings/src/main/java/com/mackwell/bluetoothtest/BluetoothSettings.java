@@ -52,6 +52,10 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
     public void receive(List<Integer> rxBuffer) {
         System.out.println("rxBuffer size: " + rxBuffer.size());
 
+        //popup dialog window
+        TestDialogFragment testDialogFragment = new TestDialogFragment();
+        testDialogFragment.show(getFragmentManager(), "testDialog");
+
         endTime = System.nanoTime();
         final DecimalFormat df = new DecimalFormat("#.00");
         final double timeElapsed = (endTime - startTime) / 1e9;
@@ -643,9 +647,11 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                         public void run() {
                             connectMenuItem.setTitle("Disconnect");
                             connectMenuItem.setEnabled(true);
-                            colorPicker.setVisibility(View.VISIBLE);
-                            onButton.setVisibility(View.VISIBLE);
-                            mSeekBar.setVisibility(View.VISIBLE);
+
+                            //disabled for LMC5 07/05/2015
+                            //colorPicker.setVisibility(View.VISIBLE);
+                            //onButton.setVisibility(View.VISIBLE);
+                            //mSeekBar.setVisibility(View.VISIBLE);
                         }
                     });
                 }
