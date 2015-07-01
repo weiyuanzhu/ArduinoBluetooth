@@ -649,9 +649,9 @@ public class BluetoothSettings extends Activity implements BluetoothLongConnecti
                             connectMenuItem.setEnabled(true);
 
                             //disabled for LMC5 07/05/2015
-                            //colorPicker.setVisibility(View.VISIBLE);
-                            //onButton.setVisibility(View.VISIBLE);
-                            //mSeekBar.setVisibility(View.VISIBLE);
+                            colorPicker.setVisibility(View.VISIBLE);
+                            onButton.setVisibility(View.VISIBLE);
+                            mSeekBar.setVisibility(View.VISIBLE);
                         }
                     });
                 }
