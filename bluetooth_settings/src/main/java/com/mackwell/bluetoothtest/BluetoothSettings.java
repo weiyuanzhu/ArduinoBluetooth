@@ -44,12 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-
+//vlc branch
 public class BluetoothSettings extends Activity implements BluetoothLongConnection.OnReceiveListener {
 
     @Override
     public void receive(List<Integer> rxBuffer) {
         System.out.println("rxBuffer size: " + rxBuffer.size());
+
 
         endTime = System.nanoTime();
         final DecimalFormat df = new DecimalFormat("#.00");
